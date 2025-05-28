@@ -35,9 +35,26 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:maxLines="2"
-            android:ellipsize="end"
             android:textSize="14sp"
+            android:visibility="gone"/>
+
+        <TextView
+            android:id="@+id/event_location"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textSize="14sp"
+            android:textColor="@android:color/black"
+            android:visibility="gone"/>
+
+        <TextView
+            android:id="@+id/event_link"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textSize="14sp"
+            android:textColor="@android:color/holo_blue_light"
+            android:autoLink="web"
             android:visibility="gone"/>
 
     </LinearLayout>

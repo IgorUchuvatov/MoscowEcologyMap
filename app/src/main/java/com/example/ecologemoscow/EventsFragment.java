@@ -26,7 +26,7 @@ public class EventsFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_events, container, false);
         recyclerView = view.findViewById(R.id.recycler_view_events);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new EcoEventAdapter(getContext(), new ArrayList<>());
+        adapter = new EcoEventAdapter(new ArrayList<>());
         recyclerView.setAdapter(adapter);
 
         // Загрузка событий в отдельном потоке
@@ -34,12 +34,6 @@ public class EventsFragment extends Fragment {
             List<EcoEvent> events = EcoEventParser.fetchEcoEvents();
             requireActivity().runOnUiThread(() -> adapter.setEvents(events));
         }).start();
-
-        // FAB для добавления своих событий (если нужно)
-        FloatingActionButton fab = view.findViewById(R.id.fab_add_event);
-        fab.setOnClickListener(v -> {
-            // Здесь можно добавить переход к созданию своего события
-        });
 
         return view;
     }

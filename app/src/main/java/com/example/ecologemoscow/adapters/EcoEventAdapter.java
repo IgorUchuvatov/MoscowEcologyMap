@@ -1,7 +1,5 @@
 package com.example.ecologemoscow.adapters;
 
-import android.app.Dialog;
-import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,22 +8,19 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.ecologemoscow.R;
 import com.example.ecologemoscow.models.EcoEvent;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import java.util.List;
 
 public class EcoEventAdapter extends RecyclerView.Adapter<EcoEventAdapter.ViewHolder> {
     private List<EcoEvent> events;
-    private Context context;
 
-    public EcoEventAdapter(Context context, List<EcoEvent> events) {
-        this.context = context;
+    public EcoEventAdapter(List<EcoEvent> events) {
         this.events = events;
     }
 
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(context).inflate(R.layout.item_eco_event, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_eco_event, parent, false);
         return new ViewHolder(view);
     }
 
@@ -34,25 +29,16 @@ public class EcoEventAdapter extends RecyclerView.Adapter<EcoEventAdapter.ViewHo
         EcoEvent event = events.get(position);
         holder.title.setText(event.getTitle());
         holder.date.setText(event.getDate());
-        
-        holder.itemView.setOnClickListener(v -> showEventDetails(event));
-    }
+        holder.description.setText(event.getDescription());
+        holder.location.setText(event.getLocation());
+        holder.link.setText(event.getLink());
 
-    private void showEventDetails(EcoEvent event) {
-        View dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_event_details, null);
-        
-        TextView titleView = dialogView.findViewById(R.id.dialog_event_title);
-        TextView dateView = dialogView.findViewById(R.id.dialog_event_date);
-        TextView descriptionView = dialogView.findViewById(R.id.dialog_event_description);
-        
-        titleView.setText(event.getTitle());
-        dateView.setText(event.getDate());
-        descriptionView.setText(event.getDescription());
-        
-        new MaterialAlertDialogBuilder(context)
-            .setView(dialogView)
-            .setPositiveButton("Закрыть", null)
-            .show();
+        holder.itemView.setOnClickListener(v -> {
+            int visibility = holder.description.getVisibility() == View.GONE ? View.VISIBLE : View.GONE;
+            holder.description.setVisibility(visibility);
+            holder.location.setVisibility(visibility);
+            holder.link.setVisibility(visibility);
+        });
     }
 
     @Override
@@ -66,12 +52,15 @@ public class EcoEventAdapter extends RecyclerView.Adapter<EcoEventAdapter.ViewHo
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView title, date;
-        
+        TextView title, date, description, location, link;
+
         ViewHolder(View itemView) {
             super(itemView);
             title = itemView.findViewById(R.id.event_title);
             date = itemView.findViewById(R.id.event_date);
+            description = itemView.findViewById(R.id.event_description);
+            location = itemView.findViewById(R.id.event_location);
+            link = itemView.findViewById(R.id.event_link);
         }
     }
 } 
