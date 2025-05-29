@@ -25,6 +25,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.example.ecologemoscow.charts.ButovoChartFragment;
+import com.example.ecologemoscow.MusicService;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
 
@@ -51,6 +52,8 @@ public class MainActivity extends AppCompatActivity {
                 } catch (Exception e) {
                     Log.e(TAG, "Error starting music: " + e.getMessage());
                 }
+            } else {
+                Log.e(TAG, "MusicService is null in onServiceConnected");
             }
         }
 
@@ -98,8 +101,6 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     loadInitialFragment();
                 }
-            } else {
-                loadInitialFragment();
             }
         } else {
             loadInitialFragment();
@@ -154,9 +155,9 @@ public class MainActivity extends AppCompatActivity {
                 } else if (itemId == R.id.navigation_events) {
                     selectedFragment = new EventsFragment();
                     tag = "events";
-                } else if (itemId == R.id.navigation_news) {
-                    selectedFragment = new OtherFragment();
-                    tag = "other";
+                } else if (itemId == R.id.navigation_places) {
+                    selectedFragment = new PlacesFragment();
+                    tag = "places";
                 }
 
                 if (selectedFragment != null && (activeFragment == null || !selectedFragment.getClass().equals(activeFragment.getClass()))) {
@@ -169,34 +170,43 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void switchFragment(Fragment newFragment, String tag) {
+        Log.d(TAG, "Attempting to switch to fragment with tag: " + tag);
         try {
-            if (newFragment == null || fragmentManager == null) return;
-            
+            if (newFragment == null || fragmentManager == null) {
+                 Log.e(TAG, "switchFragment: newFragment or fragmentManager is null");
+                return;
+            }
+
             FragmentTransaction transaction = fragmentManager.beginTransaction();
             transaction.setCustomAnimations(
                 android.R.anim.fade_in,
                 android.R.anim.fade_out
             );
-            
+
             // Detach current fragment if it exists
             if (activeFragment != null) {
+                Log.d(TAG, "Detaching current fragment: " + activeFragment.getClass().getSimpleName());
                 transaction.detach(activeFragment);
             }
-            
+
             // Check if fragment with this tag already exists
             Fragment existingFragment = fragmentManager.findFragmentByTag(tag);
             if (existingFragment != null) {
+                Log.d(TAG, "Attaching existing fragment with tag: " + tag);
                 transaction.attach(existingFragment);
                 activeFragment = existingFragment;
             } else {
+                Log.d(TAG, "Adding new fragment with tag: " + tag);
                 transaction.add(R.id.fragment_container, newFragment, tag);
                 activeFragment = newFragment;
             }
-            
+
             transaction.commit();
+            Log.d(TAG, "Fragment transaction committed.");
             updateBottomNavigation();
+             Log.d(TAG, "Bottom navigation updated.");
         } catch (Exception e) {
-            Log.e(TAG, "Error switching fragment: " + e.getMessage());
+            Log.e(TAG, "Error switching fragment: " + e.getMessage(), e);
             Toast.makeText(this, "Ошибка переключения контента", Toast.LENGTH_SHORT).show();
         }
     }
@@ -208,8 +218,8 @@ public class MainActivity extends AppCompatActivity {
             bottomNavigationView.setSelectedItemId(R.id.navigation_profile);
         } else if (activeFragment instanceof EventsFragment) {
             bottomNavigationView.setSelectedItemId(R.id.navigation_events);
-        } else if (activeFragment instanceof OtherFragment) {
-            bottomNavigationView.setSelectedItemId(R.id.navigation_news);
+        } else if (activeFragment instanceof PlacesFragment) {
+            bottomNavigationView.setSelectedItemId(R.id.navigation_places);
         }
     }
 
@@ -230,6 +240,8 @@ public class MainActivity extends AppCompatActivity {
         if (bound) {
             unbindService(connection);
             bound = false;
+        } else {
+             Log.d(TAG, "Music service not bound, skipping unbindService.");
         }
     }
 
@@ -238,6 +250,8 @@ public class MainActivity extends AppCompatActivity {
         super.onPause();
         if (musicService != null && bound) {
             musicService.pauseMusic();
+        } else {
+             Log.d(TAG, "Music service not available or not bound, skipping pauseMusic.");
         }
     }
 
@@ -246,6 +260,8 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         if (musicService != null && bound) {
             musicService.resumeMusic();
+        } else {
+             Log.d(TAG, "Music service not available or not bound, skipping resumeMusic.");
         }
     }
 
