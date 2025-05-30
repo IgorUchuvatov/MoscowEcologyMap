@@ -21,6 +21,15 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.EcologeMoscow"
         tools:targetApi="31">
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyDZueYQT-l58kk5mqA--rW7e-rKYTI96tg" />
+            
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
+
         <activity
             android:name=".CreateEventActivity"
             android:exported="false"
@@ -54,14 +63,6 @@
             android:name=".GraphActivity"
             android:exported="false"
             android:label="График измерений" />
-
-        <meta-data
-            android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyDZueYQT-l58kk5mqA--rW7e-rKYTI96tg" />
-            
-        <meta-data
-            android:name="com.google.android.gms.version"
-            android:value="@integer/google_play_services_version" />
 
     </application>
 

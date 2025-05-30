@@ -1,6 +1,7 @@
 package com.example.ecologemoscow;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,6 +17,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 public class MapFragment extends Fragment implements OnMapReadyCallback {
+    private static final String TAG = "MapFragment";
     private static final String ARG_LATITUDE = "latitude";
     private static final String ARG_LONGITUDE = "longitude";
     private static final String ARG_TITLE = "title";
@@ -43,6 +45,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             longitude = getArguments().getDouble(ARG_LONGITUDE);
             title = getArguments().getString(ARG_TITLE);
         }
+        Log.d(TAG, "Fragment created with coordinates: " + latitude + ", " + longitude);
     }
 
     @Nullable
@@ -50,7 +53,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_map, container, false);
         
-        // Добавляем кнопку "Назад"
         ImageButton backButton = view.findViewById(R.id.back_button);
         backButton.setOnClickListener(v -> {
             if (getActivity() != null) {
@@ -64,21 +66,36 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        Log.d(TAG, "onViewCreated called");
+        
         SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager()
                 .findFragmentById(R.id.map);
         if (mapFragment != null) {
+            Log.d(TAG, "Map fragment found, getting map async");
             mapFragment.getMapAsync(this);
+        } else {
+            Log.e(TAG, "Map fragment is null!");
         }
     }
 
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
+        Log.d(TAG, "onMapReady called");
         map = googleMap;
-        LatLng location = new LatLng(latitude, longitude);
-        map.addMarker(new MarkerOptions()
-                .position(location)
-                .title(title));
-        map.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 15));
+
+        try {
+            // Добавляем маркер парка
+            LatLng parkLocation = new LatLng(latitude, longitude);
+            Log.d(TAG, "Adding park marker at: " + parkLocation);
+            map.addMarker(new MarkerOptions()
+                    .position(parkLocation)
+                    .title(title));
+
+            // Устанавливаем камеру на парк
+            map.moveCamera(CameraUpdateFactory.newLatLngZoom(parkLocation, 15));
+        } catch (Exception e) {
+            Log.e(TAG, "Error setting up map markers", e);
+        }
     }
 
     @Override

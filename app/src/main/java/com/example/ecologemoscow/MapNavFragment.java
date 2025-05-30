@@ -32,21 +32,23 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-public class MapNavFragment extends Fragment implements OnMapReadyCallback {
+public class MapNavFragment extends Fragment implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
     private static final String TAG = "MapNavFragment";
     private static final LatLng MOSCOW = new LatLng(55.7558, 37.6173);
     private static final float DEFAULT_ZOOM = 10f;
     private static final LatLng SOUTH_BUTOVO_CENTER = new LatLng(55.5417, 37.5317);
+    private static final LatLng ESP32_LOCATION = new LatLng(55.5417, 37.5317); // Координаты датчика в Южном Бутово
 
     private GoogleMap mMap;
     private boolean isLocationEnabled = false;
@@ -56,9 +58,11 @@ public class MapNavFragment extends Fragment implements OnMapReadyCallback {
     private ProgressBar progressBar;
     private TextView errorView;
     private Button retryButton;
+    private FloatingActionButton graphsButton;
     private int retryCount = 0;
     private static final int MAX_RETRIES = 3;
     private Polygon southButovoPolygon;
+    private Marker deviceMarker;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -69,7 +73,12 @@ public class MapNavFragment extends Fragment implements OnMapReadyCallback {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_map_nav, container, false);
+        View view = inflater.inflate(R.layout.fragment_map_nav, container, false);
+        
+        graphsButton = view.findViewById(R.id.graphs_button);
+        graphsButton.setOnClickListener(v -> showGraphForSouthButovo());
+        
+        return view;
     }
 
     @Override
@@ -176,6 +185,20 @@ public class MapNavFragment extends Fragment implements OnMapReadyCallback {
 
             // Добавляем полигон Южное Бутово
             addSouthButovoPolygon();
+            
+            // Добавляем маркер ESP32 устройства
+            deviceMarker = mMap.addMarker(new MarkerOptions()
+                    .position(ESP32_LOCATION)
+                    .title("ESP32 Датчик")
+                    .snippet("Нажмите, чтобы увидеть данные о состоянии окружающей среды")
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+            
+            // Показываем информационное окно маркера устройства
+            deviceMarker.showInfoWindow();
+            
+            // Добавляем обработчик нажатия на маркер
+            mMap.setOnMarkerClickListener(this);
+            
         } catch (SecurityException e) {
             Log.e(TAG, "Error setting up map: " + e.getMessage());
             showError("Ошибка настройки карты: " + e.getMessage());
@@ -322,7 +345,10 @@ public class MapNavFragment extends Fragment implements OnMapReadyCallback {
     public void onDestroyView() {
         super.onDestroyView();
         isFragmentActive = false;
-        mMap = null;
+        if (mMap != null) {
+            mMap.clear();
+            mMap = null;
+        }
         isMapReady = false;
     }
 
@@ -335,6 +361,15 @@ public class MapNavFragment extends Fragment implements OnMapReadyCallback {
                     .title(title));
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 15f));
         }
+    }
+
+    @Override
+    public boolean onMarkerClick(Marker marker) {
+        if (marker.equals(deviceMarker)) {
+            showGraphForSouthButovo();
+            return true;
+        }
+        return false;
     }
 
     private void showGraphForSouthButovo() {
@@ -354,46 +389,21 @@ public class MapNavFragment extends Fragment implements OnMapReadyCallback {
                 return;
             }
 
-            // Проверяем текущий фрагмент
-            Fragment currentFragment = getActivity().getSupportFragmentManager().findFragmentById(R.id.fragment_container);
-            Log.d(TAG, "showGraphForSouthButovo: Текущий фрагмент: " + (currentFragment != null ? currentFragment.getClass().getSimpleName() : "null"));
-
-            if (currentFragment instanceof ButovoChartFragment) {
-                Log.d(TAG, "showGraphForSouthButovo: График уже открыт");
-                return;
-            }
-
             // Создаем новый фрагмент с графиком
             ButovoChartFragment chartFragment = new ButovoChartFragment();
-            Log.d(TAG, "showGraphForSouthButovo: Создан новый фрагмент с графиком");
             
-            // Начинаем транзакцию
-            FragmentTransaction transaction = getActivity().getSupportFragmentManager().beginTransaction();
+            // Заменяем текущий фрагмент на фрагмент с графиком
+            getActivity().getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragment_container, chartFragment)
+                .addToBackStack("map") // Добавляем тег для идентификации в стеке
+                .commit();
+                
+            Log.d(TAG, "showGraphForSouthButovo: Фрагмент с графиком успешно создан и добавлен");
             
-            // Проверяем, есть ли уже фрагмент с графиком в менеджере
-            Fragment existingFragment = getActivity().getSupportFragmentManager().findFragmentByTag("BUTOVO_CHART");
-
-            if (existingFragment != null) {
-                // Если фрагмент существует, показываем его
-                transaction.show(existingFragment);
-            } else {
-                // Если фрагмент не существует, добавляем его
-                transaction.add(R.id.fragment_container, chartFragment, "BUTOVO_CHART");
-            }
-            
-            // Скрываем текущий фрагмент (MapNavFragment)
-            transaction.hide(this);
-            
-            // Добавляем в стек возврата
-            transaction.addToBackStack("BUTOVO_CHART");
-            
-            // Применяем транзакцию
-            transaction.commitAllowingStateLoss();
-            
-            Log.d(TAG, "showGraphForSouthButovo: Транзакция выполнена успешно");
         } catch (Exception e) {
-            Log.e(TAG, "showGraphForSouthButovo: Ошибка при открытии графика: " + e.getMessage(), e);
-            Toast.makeText(getContext(), "Ошибка при открытии графика: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            Log.e(TAG, "showGraphForSouthButovo: Ошибка при создании фрагмента с графиком", e);
+            Toast.makeText(getContext(), "Ошибка при открытии графиков", Toast.LENGTH_SHORT).show();
         }
     }
 } 
