@@ -44,6 +44,7 @@ public class OtherFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        Log.d(TAG, "Creating view");
         View view = inflater.inflate(R.layout.fragment_other, container, false);
         
         recyclerView = view.findViewById(R.id.recycler_view);
@@ -56,8 +57,10 @@ public class OtherFragment extends Fragment {
             return view;
         }
         
+        Log.d(TAG, "Setting up RecyclerView");
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         
+        ecoPlaces = new ArrayList<>();
         adapter = new EcoPlaceAdapter(ecoPlaces, place -> {
             if (getActivity() instanceof MainActivity) {
                 try {
@@ -72,6 +75,7 @@ public class OtherFragment extends Fragment {
             }
         });
         
+        Log.d(TAG, "Setting adapter to RecyclerView");
         recyclerView.setAdapter(adapter);
         
         db = FirebaseFirestore.getInstance();
@@ -83,6 +87,7 @@ public class OtherFragment extends Fragment {
             }
         });
         
+        Log.d(TAG, "Starting to load eco places");
         loadEcoPlaces();
         
         return view;
@@ -97,41 +102,51 @@ public class OtherFragment extends Fragment {
         retryButton.setVisibility(View.GONE);
         
         if (!isNetworkAvailable()) {
+            Log.e(TAG, "No network connection available");
             Toast.makeText(getContext(), "Нет подключения к интернету", Toast.LENGTH_LONG).show();
             loadCachedData();
             return;
         }
         
-        db.collection("eco_places")
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    if (!queryDocumentSnapshots.isEmpty()) {
-                        ecoPlaces.clear();
-                        for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
-                            EcoPlace place = doc.toObject(EcoPlace.class);
-                            ecoPlaces.add(place);
+        try {
+            db.collection("eco_places")
+                    .get()
+                    .addOnSuccessListener(queryDocumentSnapshots -> {
+                        if (!queryDocumentSnapshots.isEmpty()) {
+                            Log.d(TAG, "Successfully loaded " + queryDocumentSnapshots.size() + " places from Firestore");
+                            ecoPlaces.clear();
+                            for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
+                                EcoPlace place = doc.toObject(EcoPlace.class);
+                                ecoPlaces.add(place);
+                            }
+                            adapter.notifyDataSetChanged();
+                            updateUI();
+                        } else {
+                            Log.d(TAG, "No data in Firestore, parsing from web");
+                            parseEcoPlaces();
                         }
-                        adapter.notifyDataSetChanged();
-                        updateUI();
-                    } else {
-                        parseEcoPlaces();
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error loading data from Firestore: " + e.getMessage());
-                    Toast.makeText(getContext(), "Ошибка загрузки данных: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                    loadCachedData();
-                    if (retryCount < MAX_RETRIES) {
-                        retryCount++;
-                        parseEcoPlaces();
-                    } else {
-                        isLoading = false;
-                        showRetryButton();
-                    }
-                });
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e(TAG, "Error loading data from Firestore: " + e.getMessage());
+                        Toast.makeText(getContext(), "Ошибка загрузки данных: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        loadCachedData();
+                        if (retryCount < MAX_RETRIES) {
+                            retryCount++;
+                            parseEcoPlaces();
+                        } else {
+                            isLoading = false;
+                            showRetryButton();
+                        }
+                    });
+        } catch (Exception e) {
+            Log.e(TAG, "Error accessing Firestore: " + e.getMessage());
+            Toast.makeText(getContext(), "Ошибка доступа к базе данных", Toast.LENGTH_LONG).show();
+            loadCachedData();
+        }
     }
     
     private void parseEcoPlaces() {
+        Log.d(TAG, "Starting to parse eco places");
         progressBar.setVisibility(View.VISIBLE);
         emptyView.setVisibility(View.GONE);
         retryButton.setVisibility(View.GONE);
@@ -140,51 +155,69 @@ public class OtherFragment extends Fragment {
         parser.parseEcoPlaces(new EcoPlaceParser.OnParsingCompleteListener() {
             @Override
             public void onParsingComplete(List<EcoPlace> places) {
-                ecoPlaces.clear();
-                ecoPlaces.addAll(places);
-                adapter.notifyDataSetChanged();
-                updateUI();
-                
-                if (!places.isEmpty()) {
-                    saveToFirestore(places);
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        Log.d(TAG, "Parsing complete, got " + places.size() + " places");
+                        ecoPlaces.clear();
+                        ecoPlaces.addAll(places);
+                        adapter.notifyDataSetChanged();
+                        updateUI();
+                        
+                        if (!places.isEmpty()) {
+                            saveToFirestore(places);
+                        }
+                        
+                        isLoading = false;
+                    });
                 }
-                
-                isLoading = false;
             }
 
             @Override
             public void onParsingError(String error) {
                 Log.e(TAG, "Error parsing eco places: " + error);
-                Toast.makeText(getContext(), "Ошибка загрузки данных: " + error, Toast.LENGTH_SHORT).show();
-                loadCachedData();
-                if (retryCount < MAX_RETRIES) {
-                    retryCount++;
-                    parseEcoPlaces();
-                } else {
-                    isLoading = false;
-                    showRetryButton();
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        Toast.makeText(getContext(), "Ошибка загрузки данных: " + error, Toast.LENGTH_SHORT).show();
+                        loadCachedData();
+                        if (retryCount < MAX_RETRIES) {
+                            retryCount++;
+                            parseEcoPlaces();
+                        } else {
+                            isLoading = false;
+                            showRetryButton();
+                        }
+                    });
                 }
             }
         });
     }
     
     private void updateUI() {
+        Log.d(TAG, "Updating UI. Places count: " + ecoPlaces.size());
         if (adapter != null) {
             adapter.notifyDataSetChanged();
+        } else {
+            Log.e(TAG, "Adapter is null in updateUI!");
         }
         
         if (recyclerView != null && emptyView != null) {
             if (ecoPlaces.isEmpty()) {
+                Log.d(TAG, "Showing empty view");
                 emptyView.setVisibility(View.VISIBLE);
                 recyclerView.setVisibility(View.GONE);
             } else {
+                Log.d(TAG, "Showing recycler view");
                 emptyView.setVisibility(View.GONE);
                 recyclerView.setVisibility(View.VISIBLE);
             }
+        } else {
+            Log.e(TAG, "recyclerView or emptyView is null!");
         }
         
         if (progressBar != null) {
             progressBar.setVisibility(View.GONE);
+        } else {
+            Log.e(TAG, "progressBar is null!");
         }
     }
     
@@ -201,8 +234,13 @@ public class OtherFragment extends Fragment {
     }
     
     private void loadCachedData() {
-        // TODO: Implement caching
-        loadDemoData();
+        Log.d(TAG, "Loading cached data");
+        ecoPlaces.clear();
+        ecoPlaces.addAll(EcoPlaceParser.getDemoData());
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
+        }
+        updateUI();
     }
     
     private void cacheData(List<EcoPlace> places) {
@@ -222,9 +260,17 @@ public class OtherFragment extends Fragment {
     }
     
     private void loadDemoData() {
+        Log.d(TAG, "Loading demo data");
         ecoPlaces.clear();
-        ecoPlaces.addAll(EcoPlaceParser.getDemoData());
-        adapter.notifyDataSetChanged();
+        List<EcoPlace> demoPlaces = EcoPlaceParser.getDemoData();
+        Log.d(TAG, "Got " + demoPlaces.size() + " demo places");
+        ecoPlaces.addAll(demoPlaces);
+        if (adapter != null) {
+            Log.d(TAG, "Notifying adapter of data change");
+            adapter.notifyDataSetChanged();
+        } else {
+            Log.e(TAG, "Adapter is null!");
+        }
         updateUI();
     }
     

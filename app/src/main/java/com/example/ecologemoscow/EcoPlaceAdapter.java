@@ -2,6 +2,7 @@ package com.example.ecologemoscow;
 
 import android.content.Intent;
 import android.net.Uri;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,9 +14,13 @@ import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
+
 import java.util.List;
 
 public class EcoPlaceAdapter extends RecyclerView.Adapter<EcoPlaceAdapter.EcoPlaceViewHolder> {
+    private static final String TAG = "EcoPlaceAdapter";
     private List<EcoPlace> ecoPlaces;
     private OnItemClickListener listener;
 
@@ -38,23 +43,35 @@ public class EcoPlaceAdapter extends RecyclerView.Adapter<EcoPlaceAdapter.EcoPla
     @Override
     public void onBindViewHolder(@NonNull EcoPlaceViewHolder holder, int position) {
         EcoPlace place = ecoPlaces.get(position);
+        Log.d(TAG, "Binding place: " + place.getName());
+        
         holder.nameTextView.setText(place.getName());
         holder.descriptionTextView.setText(place.getDescription());
         holder.addressTextView.setText(place.getAddress());
         holder.workingHoursTextView.setText(place.getWorkingHours());
 
         // Загрузка изображения
-        holder.imageView.setImageResource(R.drawable.default_image_background);
+        if (place.getImageUrl() != null && !place.getImageUrl().isEmpty()) {
+            Log.d(TAG, "Loading image from URL: " + place.getImageUrl());
+            try {
+                Glide.with(holder.itemView.getContext())
+                    .load(place.getImageUrl())
+                    .transition(DrawableTransitionOptions.withCrossFade())
+                    .error(R.drawable.default_image_background)
+                    .placeholder(R.drawable.default_image_background)
+                    .into(holder.imageView);
+            } catch (Exception e) {
+                Log.e(TAG, "Error loading image: " + e.getMessage());
+                holder.imageView.setImageResource(R.drawable.default_image_background);
+            }
+        } else {
+            Log.d(TAG, "No image URL, using default image");
+            holder.imageView.setImageResource(R.drawable.default_image_background);
+        }
         holder.imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
 
-        // Обработка нажатия на карточку для открытия места на карте
+        // Обработка нажатия на карточку
         holder.cardView.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onItemClick(place);
-            }
-        });
-
-        holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onItemClick(place);
             }
@@ -63,7 +80,7 @@ public class EcoPlaceAdapter extends RecyclerView.Adapter<EcoPlaceAdapter.EcoPla
 
     @Override
     public int getItemCount() {
-        return ecoPlaces.size();
+        return ecoPlaces != null ? ecoPlaces.size() : 0;
     }
 
     static class EcoPlaceViewHolder extends RecyclerView.ViewHolder {
