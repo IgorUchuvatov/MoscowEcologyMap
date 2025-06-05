@@ -155,9 +155,12 @@ public class MainActivity extends AppCompatActivity {
                 } else if (itemId == R.id.navigation_events) {
                     selectedFragment = new EventsFragment();
                     tag = "events";
-                } else if (itemId == R.id.navigation_places) {
+                } else if (itemId == R.id.navigation_parks) {
                     selectedFragment = new PlacesFragment();
-                    tag = "places";
+                    tag = "parks";
+                } else if (itemId == R.id.navigation_routes) {
+                    selectedFragment = new RoutesFragment();
+                    tag = "routes";
                 }
 
                 if (selectedFragment != null && (activeFragment == null || !selectedFragment.getClass().equals(activeFragment.getClass()))) {
@@ -173,7 +176,7 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, "Attempting to switch to fragment with tag: " + tag);
         try {
             if (newFragment == null || fragmentManager == null) {
-                 Log.e(TAG, "switchFragment: newFragment or fragmentManager is null");
+                Log.e(TAG, "switchFragment: newFragment or fragmentManager is null");
                 return;
             }
 
@@ -183,28 +186,14 @@ public class MainActivity extends AppCompatActivity {
                 android.R.anim.fade_out
             );
 
-            // Detach current fragment if it exists
-            if (activeFragment != null) {
-                Log.d(TAG, "Detaching current fragment: " + activeFragment.getClass().getSimpleName());
-                transaction.detach(activeFragment);
-            }
-
-            // Check if fragment with this tag already exists
-            Fragment existingFragment = fragmentManager.findFragmentByTag(tag);
-            if (existingFragment != null) {
-                Log.d(TAG, "Attaching existing fragment with tag: " + tag);
-                transaction.attach(existingFragment);
-                activeFragment = existingFragment;
-            } else {
-                Log.d(TAG, "Adding new fragment with tag: " + tag);
-                transaction.add(R.id.fragment_container, newFragment, tag);
-                activeFragment = newFragment;
-            }
+            // Заменяем текущий фрагмент на новый
+            transaction.replace(R.id.fragment_container, newFragment, tag);
+            activeFragment = newFragment;
 
             transaction.commit();
             Log.d(TAG, "Fragment transaction committed.");
             updateBottomNavigation();
-             Log.d(TAG, "Bottom navigation updated.");
+            Log.d(TAG, "Bottom navigation updated.");
         } catch (Exception e) {
             Log.e(TAG, "Error switching fragment: " + e.getMessage(), e);
             Toast.makeText(this, "Ошибка переключения контента", Toast.LENGTH_SHORT).show();
@@ -219,7 +208,12 @@ public class MainActivity extends AppCompatActivity {
         } else if (activeFragment instanceof EventsFragment) {
             bottomNavigationView.setSelectedItemId(R.id.navigation_events);
         } else if (activeFragment instanceof PlacesFragment) {
-            bottomNavigationView.setSelectedItemId(R.id.navigation_places);
+            String tag = activeFragment.getTag();
+            if ("parks".equals(tag)) {
+                bottomNavigationView.setSelectedItemId(R.id.navigation_parks);
+            }
+        } else if (activeFragment instanceof RoutesFragment) {
+            bottomNavigationView.setSelectedItemId(R.id.navigation_routes);
         }
     }
 

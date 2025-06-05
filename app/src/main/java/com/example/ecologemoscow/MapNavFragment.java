@@ -355,7 +355,6 @@ public class MapNavFragment extends Fragment implements OnMapReadyCallback, Goog
     public void showPlace(double latitude, double longitude, String title) {
         if (mMap != null) {
             LatLng location = new LatLng(latitude, longitude);
-            mMap.clear(); // Очищаем предыдущие маркеры
             mMap.addMarker(new MarkerOptions()
                     .position(location)
                     .title(title));

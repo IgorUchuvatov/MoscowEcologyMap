@@ -17,5 +17,9 @@
             android:id="@+id/nav_settings"
             android:icon="@drawable/ic_launcher_background"
             android:title="Настройки" />
+        <item
+            android:id="@+id/nav_routes"
+            android:icon="@drawable/ic_launcher_background"
+            android:title="@string/routes" />
     </group>
 </menu>
