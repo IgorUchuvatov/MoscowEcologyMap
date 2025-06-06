@@ -28,6 +28,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.example.ecologemoscow.charts.ButovoChartFragment;
+import com.example.ecologemoscow.charts.ChartsContainerFragment;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -130,7 +131,7 @@ public class MapNavFragment extends Fragment implements OnMapReadyCallback, Goog
         
         showLoading();
         
-        // Проверяем подключение к интернету
+        //  интернет
         if (!isNetworkAvailable()) {
             showError("Нет подключения к интернету");
             return;
@@ -218,7 +219,7 @@ public class MapNavFragment extends Fragment implements OnMapReadyCallback, Goog
                 .addAll(polygonPoints)
                 .strokeColor(Color.BLUE)
                 .strokeWidth(5)
-                .fillColor(Color.argb(50, 0, 0, 255)); // Полупрозрачный синий
+                .fillColor(Color.argb(50, 0, 0, 255));
 
         southButovoPolygon = mMap.addPolygon(polygonOptions);
         southButovoPolygon.setClickable(true);
@@ -226,8 +227,22 @@ public class MapNavFragment extends Fragment implements OnMapReadyCallback, Goog
         // Добавляем обработчик нажатия на полигон
         mMap.setOnPolygonClickListener(polygon -> {
             if (polygon.equals(southButovoPolygon)) {
-                Log.d(TAG, "Полигон Южное Бутово нажат");
-                showGraphForSouthButovo();
+                ChartsContainerFragment chartsFragment = new ChartsContainerFragment();
+
+                // Передаем информацию о районе
+                Bundle args = new Bundle();
+                args.putString("district_name", "Южное Бутово");
+                args.putString("default_chart", "dust");
+                chartsFragment.setArguments(args);
+
+                if (getActivity() != null) {
+                    getActivity().getSupportFragmentManager()
+                            .beginTransaction()
+                            .replace(R.id.fragment_container, chartsFragment)
+                            .addToBackStack(null)
+                            .commit();
+                    Log.d(TAG, "ChartsContainerFragmentотображен");
+                }
             }
         });
 

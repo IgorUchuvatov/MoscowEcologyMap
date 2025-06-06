@@ -19,56 +19,29 @@ import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
-import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ButovoChartFragment extends BaseChartFragment {
-    private static final String TAG = "ButovoChartFragment";
+public class NoiseChartFragment extends BaseChartFragment {
+    private static final String TAG = "NoiseChartFragment";
     private static final String[] HOURS = {"00:00", "03:00", "06:00", "09:00", "12:00", "15:00", "18:00", "21:00"};
     private LineChart chart;
     private ChartData chartData;
 
-    public ButovoChartFragment() {
-        this.chartTitle = "Данные Южного Бутово";
-        this.chartColor = Color.BLUE;
-    }
-
-    @Override
-    protected int getLayoutId() {
-        return R.layout.fragment_dust_chart;
-    }
-
-    @Override
-    protected int getChartId() {
-        return R.id.chart;
+    public NoiseChartFragment() {
+        this.chartTitle = "Уровень шума";
+        this.chartColor = Color.RED;
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         Log.d(TAG, "onCreateView: Создание представления фрагмента");
-        View view = inflater.inflate(R.layout.fragment_butovo_chart, container, false);
+        View view = inflater.inflate(R.layout.fragment_noise_chart, container, false);
         
         try {
-            // Инициализация графика
-            chart = view.findViewById(R.id.butovoChart);
-            if (chart == null) {
-                Log.e(TAG, "onCreateView: График не найден");
-                return view;
-            }
-
-            // Настройка графика
-            chart.setDrawGridBackground(false);
-            chart.getDescription().setEnabled(false);
-            chart.setTouchEnabled(true);
-            chart.setDragEnabled(true);
-            chart.setScaleEnabled(true);
-            chart.setPinchZoom(true);
-            chart.setDrawBorders(false);
-
             ImageButton closeButton = view.findViewById(R.id.close_chart);
             if (closeButton != null) {
                 closeButton.setOnClickListener(v -> {
@@ -96,9 +69,9 @@ public class ButovoChartFragment extends BaseChartFragment {
 
     @Override
     protected void setupChart() {
-        Log.d(TAG, "setupChart: Настройка графика");
+        Log.d(TAG, "Настройка графика");
         if (chart == null || chartData == null) {
-            Log.e(TAG, "setupChart: График или данные не инициализированы");
+            Log.e(TAG, " График или данные не инициализированы");
             return;
         }
 
@@ -120,14 +93,14 @@ public class ButovoChartFragment extends BaseChartFragment {
                 return;
             }
 
-            LineDataSet dataSet = new LineDataSet(entries, "Уровень загрязнения");
-            dataSet.setColor(Color.BLUE);
+            LineDataSet dataSet = new LineDataSet(entries, "Уровень шума");
+            dataSet.setColor(Color.YELLOW);
             dataSet.setValueTextColor(Color.BLACK);
             dataSet.setDrawCircles(true);
             dataSet.setDrawValues(true);
             dataSet.setLineWidth(2f);
             dataSet.setCircleRadius(4f);
-            dataSet.setCircleColor(Color.BLUE);
+            dataSet.setCircleColor(Color.YELLOW);
             dataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
 
             LineData lineData = new LineData(dataSet);
@@ -137,7 +110,7 @@ public class ButovoChartFragment extends BaseChartFragment {
             XAxis xAxis = chart.getXAxis();
             xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
             xAxis.setDrawGridLines(false);
-            xAxis.setValueFormatter(new IndexAxisValueFormatter(HOURS));
+            xAxis.setValueFormatter(new com.github.mikephil.charting.formatter.IndexAxisValueFormatter(HOURS));
 
             chart.getAxisRight().setEnabled(false);
             chart.getAxisLeft().setDrawGridLines(true);
@@ -146,6 +119,9 @@ public class ButovoChartFragment extends BaseChartFragment {
             // Настройка легенды
             chart.getLegend().setEnabled(true);
             chart.getLegend().setTextColor(Color.BLACK);
+            
+            // Настройка описания
+            chart.getDescription().setEnabled(false);
             
             // Анимация
             chart.animateX(1000);
@@ -159,13 +135,7 @@ public class ButovoChartFragment extends BaseChartFragment {
     }
 
     protected void setupData() {
-        Log.d(TAG, "setupData: Настройка данных графика");
-        if (chart == null) {
-            Log.e(TAG, "setupData: График не инициализирован");
-            return;
-        }
-
-        chartTitle = "Экология Южного Бутово";
+        chartTitle = "Уровень шума";
         chart.getDescription().setText(chartTitle);
         
         // Создаем тестовые данные
@@ -173,7 +143,7 @@ public class ButovoChartFragment extends BaseChartFragment {
         for (String hour : HOURS) {
             data.put(hour, Math.random() * 100);
         }
-        chartData = new ChartData(chartTitle, "Уровень загрязнения", Color.BLUE, data) {
+        chartData = new ChartData(chartTitle, "Уровень шума", Color.YELLOW, data) {
             @Override
             public String getChartType() {
                 return "line";
@@ -181,5 +151,15 @@ public class ButovoChartFragment extends BaseChartFragment {
         };
         
         setupChart();
+    }
+
+    @Override
+    protected int getLayoutId() {
+        return R.layout.fragment_noise_chart;
+    }
+
+    @Override
+    protected int getChartId() {
+        return R.id.chart;
     }
 } 

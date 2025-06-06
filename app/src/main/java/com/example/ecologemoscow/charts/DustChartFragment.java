@@ -22,39 +22,26 @@ import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-public class ButovoChartFragment extends BaseChartFragment {
-    private static final String TAG = "ButovoChartFragment";
+public class DustChartFragment extends BaseChartFragment {
+    private static final String TAG = "DustChartFragment";
     private static final String[] HOURS = {"00:00", "03:00", "06:00", "09:00", "12:00", "15:00", "18:00", "21:00"};
     private LineChart chart;
-    private ChartData chartData;
 
-    public ButovoChartFragment() {
-        this.chartTitle = "Данные Южного Бутово";
+    public DustChartFragment() {
+        this.chartTitle = "Уровень пыли";
         this.chartColor = Color.BLUE;
-    }
-
-    @Override
-    protected int getLayoutId() {
-        return R.layout.fragment_dust_chart;
-    }
-
-    @Override
-    protected int getChartId() {
-        return R.id.chart;
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         Log.d(TAG, "onCreateView: Создание представления фрагмента");
-        View view = inflater.inflate(R.layout.fragment_butovo_chart, container, false);
+        View view = inflater.inflate(R.layout.fragment_dust_chart, container, false);
         
         try {
             // Инициализация графика
-            chart = view.findViewById(R.id.butovoChart);
+            chart = view.findViewById(R.id.chart);
             if (chart == null) {
                 Log.e(TAG, "onCreateView: График не найден");
                 return view;
@@ -80,8 +67,11 @@ public class ButovoChartFragment extends BaseChartFragment {
             } else {
                 Log.e(TAG, "onCreateView: Кнопка закрытия не найдена");
             }
+
+            setupChart();
+            Log.d(TAG, "onCreateView: График успешно инициализирован");
         } catch (Exception e) {
-            Log.e(TAG, "onCreateView: Ошибка при инициализации: " + e.getMessage());
+            Log.e(TAG, "onCreateView: Ошибка при инициализации: " + e.getMessage(), e);
             Toast.makeText(getContext(), "Ошибка инициализации: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
         
@@ -89,38 +79,24 @@ public class ButovoChartFragment extends BaseChartFragment {
     }
 
     @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        setupData();
+    protected int getLayoutId() {
+        return R.layout.fragment_dust_chart;
     }
 
     @Override
+    protected int getChartId() {
+        return R.id.chart;
+    }
+
     protected void setupChart() {
-        Log.d(TAG, "setupChart: Настройка графика");
-        if (chart == null || chartData == null) {
-            Log.e(TAG, "setupChart: График или данные не инициализированы");
-            return;
-        }
-
         try {
+            // Создаем тестовые данные
             List<Entry> entries = new ArrayList<>();
-            int index = 0;
-            for (String hour : HOURS) {
-                Double value = chartData.getData().get(hour);
-                if (value != null) {
-                    entries.add(new Entry(index, value.floatValue()));
-                }
-                index++;
+            for (int i = 0; i < HOURS.length; i++) {
+                entries.add(new Entry(i, (float) (Math.random() * 100)));
             }
 
-            if (entries.isEmpty()) {
-                Log.w(TAG, "setupChart: Нет данных для отображения");
-                chart.setNoDataText("Нет данных для отображения");
-                chart.invalidate();
-                return;
-            }
-
-            LineDataSet dataSet = new LineDataSet(entries, "Уровень загрязнения");
+            LineDataSet dataSet = new LineDataSet(entries, "Уровень пыли");
             dataSet.setColor(Color.BLUE);
             dataSet.setValueTextColor(Color.BLACK);
             dataSet.setDrawCircles(true);
@@ -153,33 +129,8 @@ public class ButovoChartFragment extends BaseChartFragment {
             chart.invalidate();
             Log.d(TAG, "setupChart: График успешно настроен");
         } catch (Exception e) {
-            Log.e(TAG, "setupChart: Ошибка при настройке графика: " + e.getMessage());
+            Log.e(TAG, "setupChart: Ошибка при настройке графика: " + e.getMessage(), e);
             Toast.makeText(getContext(), "Ошибка настройки графика: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
-    }
-
-    protected void setupData() {
-        Log.d(TAG, "setupData: Настройка данных графика");
-        if (chart == null) {
-            Log.e(TAG, "setupData: График не инициализирован");
-            return;
-        }
-
-        chartTitle = "Экология Южного Бутово";
-        chart.getDescription().setText(chartTitle);
-        
-        // Создаем тестовые данные
-        Map<String, Double> data = new HashMap<>();
-        for (String hour : HOURS) {
-            data.put(hour, Math.random() * 100);
-        }
-        chartData = new ChartData(chartTitle, "Уровень загрязнения", Color.BLUE, data) {
-            @Override
-            public String getChartType() {
-                return "line";
-            }
-        };
-        
-        setupChart();
     }
 } 

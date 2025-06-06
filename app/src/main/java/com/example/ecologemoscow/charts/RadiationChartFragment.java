@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -14,9 +15,7 @@ import androidx.fragment.app.Fragment;
 
 import com.example.ecologemoscow.R;
 import com.github.mikephil.charting.charts.LineChart;
-import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.XAxis;
-import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
@@ -25,24 +24,26 @@ import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class BaseChartFragment extends Fragment {
-    protected static final String[] HOURS = {"00:00", "03:00", "06:00", "09:00", "12:00", "15:00", "18:00", "21:00"};
-    protected LineChart chart;
-    protected List<Entry> entries;
-    protected String chartTitle;
-    protected int chartColor;
+public class RadiationChartFragment extends BaseChartFragment {
+    private static final String TAG = "RadiationChartFragment";
+    private static final String[] HOURS = {"00:00", "03:00", "06:00", "09:00", "12:00", "15:00", "18:00", "21:00"};
+    private LineChart chart;
 
-    @Nullable
+    public RadiationChartFragment() {
+        this.chartTitle = "Уровень радиации";
+        this.chartColor = Color.RED;
+    }
+
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        Log.d(getTag(), "onCreateView: Создание представления фрагмента");
-        View view = inflater.inflate(getLayoutId(), container, false);
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        Log.d(TAG, "onCreateView: Создание представления фрагмента");
+        View view = inflater.inflate(R.layout.fragment_radiation_chart, container, false);
         
         try {
             // Инициализация графика
-            chart = view.findViewById(getChartId());
+            chart = view.findViewById(R.id.chart);
             if (chart == null) {
-                Log.e(getTag(), "onCreateView: График не найден");
+                Log.e(TAG, "onCreateView: График не найден");
                 return view;
             }
 
@@ -56,36 +57,31 @@ public abstract class BaseChartFragment extends Fragment {
             chart.setDrawBorders(false);
 
             setupChart();
-            Log.d(getTag(), "onCreateView: График успешно инициализирован");
+            Log.d(TAG, "onCreateView: График успешно инициализирован");
         } catch (Exception e) {
-            Log.e(getTag(), "onCreateView: Ошибка при инициализации: " + e.getMessage(), e);
+            Log.e(TAG, "onCreateView: Ошибка при инициализации: " + e.getMessage(), e);
             Toast.makeText(getContext(), "Ошибка инициализации: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
         
         return view;
     }
 
-    protected abstract int getLayoutId();
-    protected abstract int getChartId();
-
     protected void setupChart() {
         try {
-            if (entries == null) {
-                entries = new ArrayList<>();
-                // Создаем тестовые данные по умолчанию
-                for (int i = 0; i < HOURS.length; i++) {
-                    entries.add(new Entry(i, (float) (Math.random() * 100)));
-                }
+            // Создаем тестовые данные
+            List<Entry> entries = new ArrayList<>();
+            for (int i = 0; i < HOURS.length; i++) {
+                entries.add(new Entry(i, (float) (Math.random() * 0.5))); // Радиация обычно в мкЗв/ч
             }
 
-            LineDataSet dataSet = new LineDataSet(entries, chartTitle);
-            dataSet.setColor(chartColor);
+            LineDataSet dataSet = new LineDataSet(entries, "Уровень радиации");
+            dataSet.setColor(Color.RED);
             dataSet.setValueTextColor(Color.BLACK);
             dataSet.setDrawCircles(true);
             dataSet.setDrawValues(true);
             dataSet.setLineWidth(2f);
             dataSet.setCircleRadius(4f);
-            dataSet.setCircleColor(chartColor);
+            dataSet.setCircleColor(Color.RED);
             dataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
 
             LineData lineData = new LineData(dataSet);
@@ -109,31 +105,20 @@ public abstract class BaseChartFragment extends Fragment {
             chart.animateX(1000);
             
             chart.invalidate();
-            Log.d(getTag(), "setupChart: График успешно настроен");
+            Log.d(TAG, "setupChart: График успешно настроен");
         } catch (Exception e) {
-            Log.e(getTag(), "setupChart: Ошибка при настройке графика: " + e.getMessage(), e);
+            Log.e(TAG, "setupChart: Ошибка при настройке графика: " + e.getMessage(), e);
             Toast.makeText(getContext(), "Ошибка настройки графика: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 
-    public void setData(List<Entry> newEntries) {
-        this.entries = newEntries;
-        if (chart != null) {
-            setupChart();
-        }
+    @Override
+    protected int getLayoutId() {
+        return R.layout.fragment_radiation_chart;
     }
 
-    public void setChartTitle(String title) {
-        this.chartTitle = title;
-        if (chart != null) {
-            setupChart();
-        }
-    }
-
-    public void setChartColor(int color) {
-        this.chartColor = color;
-        if (chart != null) {
-            setupChart();
-        }
+    @Override
+    protected int getChartId() {
+        return R.id.chart;
     }
 } 
