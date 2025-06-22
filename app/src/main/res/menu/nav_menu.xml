@@ -3,23 +3,23 @@
     <group android:checkableBehavior="single">
         <item
             android:id="@+id/nav_map"
-            android:icon="@drawable/blackhole"
+            android:icon="@drawable/ic_map_blue"
             android:title="Карта" />
         <item
             android:id="@+id/nav_profile"
-            android:icon="@drawable/ic_launcher_background"
+            android:icon="@drawable/ic_profile_blue"
             android:title="Профиль" />
         <item
             android:id="@+id/nav_about"
-            android:icon="@drawable/ic_launcher_background"
+            android:icon="@drawable/ic_about_blue"
             android:title="О приложении" />
         <item
             android:id="@+id/nav_settings"
-            android:icon="@drawable/ic_launcher_background"
+            android:icon="@drawable/ic_settings_blue"
             android:title="Настройки" />
         <item
             android:id="@+id/nav_routes"
-            android:icon="@drawable/ic_launcher_background"
-            android:title="@string/routes" />
+            android:icon="@drawable/ic_routes_blue"
+            android:title="Маршруты" />
     </group>
 </menu>

@@ -31,6 +31,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +43,7 @@ public class ShopsFragment extends Fragment implements OnMapReadyCallback {
     private View shopInfoView;
     private boolean isInfoVisible = false;
     private BitmapDescriptor customMarkerIcon;
+    private FloatingActionButton homeButton;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -51,7 +53,11 @@ public class ShopsFragment extends Fragment implements OnMapReadyCallback {
         shopsRef = FirebaseDatabase.getInstance().getReference("shops");
         shops = new ArrayList<>();
 
-        //
+        // Инициализация кнопки возврата
+        homeButton = view.findViewById(R.id.home_button);
+        homeButton.setOnClickListener(v -> returnToDistrictsMap());
+
+        // Инициализация кастомной иконки маркера
         customMarkerIcon = getBitmapDescriptor(R.drawable.iconshop);
 
         // Инициализация карты
@@ -74,26 +80,28 @@ public class ShopsFragment extends Fragment implements OnMapReadyCallback {
         return view;
     }
 
+    private void returnToDistrictsMap() {
+        if (getActivity() != null) {
+            getActivity().getSupportFragmentManager().popBackStack();
+        }
+    }
+
     private BitmapDescriptor getBitmapDescriptor(int vectorResId) {
         if (getContext() == null) return null;
         
         Drawable vectorDrawable = ContextCompat.getDrawable(getContext(), vectorResId);
         if (vectorDrawable == null) return null;
-        
-        // Размер иконки
+
         int size = 120;
-        
-        // Создаем квадратный битмап
         Bitmap bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
         
-        // Устанавливаем размеры drawable
+        // drawable
         vectorDrawable.setBounds(0, 0, size, size);
-        
-        // Рисуем drawable на канвасе
+
         vectorDrawable.draw(canvas);
         
-        // Создаем круглый битмап
+        // круглый битмап
         Bitmap outputBitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
         Canvas outputCanvas = new Canvas(outputBitmap);
         
@@ -113,14 +121,14 @@ public class ShopsFragment extends Fragment implements OnMapReadyCallback {
     public void onMapReady(@NonNull GoogleMap map) {
         googleMap = map;
 
-        // Центрируем карту на Москве
+        
         LatLng moscow = new LatLng(55.751999, 37.617499);
         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(moscow, 10));
 
-        // Добавляем тестовые магазины
+        
         addTestShops();
 
-        // Обработчик клика по маркеру
+        
         googleMap.setOnMarkerClickListener(marker -> {
             Shop shop = (Shop) marker.getTag();
             if (shop != null) {
@@ -132,13 +140,33 @@ public class ShopsFragment extends Fragment implements OnMapReadyCallback {
     }
 
     private void addTestShops() {
-        // Тестовые магазины
+        // Тестовые магазины с подробными описаниями
         Shop[] testShops = {
-            new Shop("ЭкоМаркет Южное Бутово", "09:00", "21:00", 55.5425, 37.5308),
-            new Shop("Зеленый Мир", "10:00", "22:00", 55.5725, 37.5608),
-            new Shop("ЭкоПром", "08:00", "20:00", 55.5575, 37.5458),
-            new Shop("Природа", "09:00", "21:00", 55.5625, 37.5358),
-            new Shop("ЭкоПлюс", "10:00", "22:00", 55.5475, 37.5508)
+            new Shop(
+                "ЭкоМаркет Южное Бутово",
+                "09:00", "21:00", 55.5425, 37.5308,
+                "ЭкоМаркет Южное Бутово — это современный магазин экологически чистых продуктов и товаров для дома. Здесь вы найдете широкий ассортимент органических овощей и фруктов, натуральных молочных продуктов, а также бытовую химию без вредных добавок.\n\nМагазин уделяет особое внимание качеству и происхождению товаров, сотрудничая только с проверенными поставщиками. Для постоянных клиентов действуют скидки и бонусные программы."
+            ),
+            new Shop(
+                "Зеленый Мир",
+                "10:00", "22:00", 55.5725, 37.5608,
+                "Зеленый Мир — это уютный магазин, специализирующийся на продаже эко-товаров для всей семьи. В ассортименте представлены продукты для вегетарианцев, веганов и людей, следящих за своим здоровьем.\n\nЗдесь можно приобрести натуральную косметику, эко-игрушки для детей и товары для раздельного сбора мусора. В магазине регулярно проходят мастер-классы и лекции по экологичному образу жизни."
+            ),
+            new Shop(
+                "ЭкоПром",
+                "08:00", "20:00", 55.5575, 37.5458,
+                "ЭкоПром — это сеть магазинов, предлагающих только сертифицированные органические продукты. Особое внимание уделяется местным производителям и сезонным товарам.\n\nВ магазине можно получить консультацию по вопросам здорового питания и подобрать индивидуальный рацион. Для покупателей действует система лояльности и бесплатная доставка по району."
+            ),
+            new Shop(
+                "Природа",
+                "09:00", "21:00", 55.5625, 37.5358,
+                "Природа — магазин, где собраны лучшие товары для здорового образа жизни. Здесь вы найдете свежие фермерские продукты, натуральные напитки, а также товары для йоги и фитнеса.\n\nМагазин поддерживает местные эко-инициативы и проводит акции по сбору вторсырья. Для новых клиентов предусмотрены приветственные скидки."
+            ),
+            new Shop(
+                "ЭкоПлюс",
+                "10:00", "22:00", 55.5475, 37.5508,
+                "ЭкоПлюс — это магазин, ориентированный на современные эко-решения для дома и офиса. В ассортименте — биоразлагаемая упаковка, многоразовые бутылки, эко-гаджеты и многое другое.\n\nМагазин сотрудничает с ведущими российскими и зарубежными брендами, а также организует обучающие мероприятия для всех желающих."
+            )
         };
 
         // Добавляем маркеры для тестовых магазинов
@@ -160,23 +188,13 @@ public class ShopsFragment extends Fragment implements OnMapReadyCallback {
     }
 
     private void showShopInfo(Shop shop) {
-        // Заполняем информацию о магазине
-        TextView shopName = shopInfoView.findViewById(R.id.shop_name);
-        TextView shopTime = shopInfoView.findViewById(R.id.shop_time);
-
-        shopName.setText(shop.getName());
-        shopTime.setText(String.format("Время работы: %s - %s", shop.getOpenTime(), shop.getCloseTime()));
-
-        // Показываем информацию
-        shopInfoView.setVisibility(View.VISIBLE);
-        isInfoVisible = true;
-
-        // Обработчик закрытия окна информации
-        View closeButton = shopInfoView.findViewById(R.id.close_shop_info);
-        closeButton.setOnClickListener(v -> {
-            shopInfoView.setVisibility(View.GONE);
-            isInfoVisible = false;
-        });
+        // Вместо показа фрагмента — запуск отдельной активности
+        android.content.Intent intent = new android.content.Intent(getContext(), ShopDetailsActivity.class);
+        intent.putExtra("name", shop.getName());
+        intent.putExtra("openTime", shop.getOpenTime());
+        intent.putExtra("closeTime", shop.getCloseTime());
+        intent.putExtra("description", shop.getDescription());
+        startActivity(intent);
     }
 
     // Класс для хранения информации о магазине
@@ -186,15 +204,17 @@ public class ShopsFragment extends Fragment implements OnMapReadyCallback {
         private String closeTime;
         private double latitude;
         private double longitude;
+        private String description;
 
         public Shop() {}
 
-        public Shop(String name, String openTime, String closeTime, double latitude, double longitude) {
+        public Shop(String name, String openTime, String closeTime, double latitude, double longitude, String description) {
             this.name = name;
             this.openTime = openTime;
             this.closeTime = closeTime;
             this.latitude = latitude;
             this.longitude = longitude;
+            this.description = description;
         }
 
         public String getName() { return name; }
@@ -207,5 +227,7 @@ public class ShopsFragment extends Fragment implements OnMapReadyCallback {
         public void setLatitude(double latitude) { this.latitude = latitude; }
         public double getLongitude() { return longitude; }
         public void setLongitude(double longitude) { this.longitude = longitude; }
+        public String getDescription() { return description; }
+        public void setDescription(String description) { this.description = description; }
     }
 }

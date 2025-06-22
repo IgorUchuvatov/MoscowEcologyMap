@@ -63,6 +63,7 @@
             android:name=".GraphActivity"
             android:exported="false"
             android:label="График измерений" />
+        <activity android:name=".ShopDetailsActivity" />
 
     </application>
 

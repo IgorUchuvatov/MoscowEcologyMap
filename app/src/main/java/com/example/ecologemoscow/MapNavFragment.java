@@ -59,11 +59,12 @@ public class MapNavFragment extends Fragment implements OnMapReadyCallback, Goog
     private ProgressBar progressBar;
     private TextView errorView;
     private Button retryButton;
-    private FloatingActionButton graphsButton;
+    private FloatingActionButton homeButton;
     private int retryCount = 0;
     private static final int MAX_RETRIES = 3;
     private Polygon southButovoPolygon;
     private Marker deviceMarker;
+    private boolean isShopsMapVisible = false;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -76,8 +77,8 @@ public class MapNavFragment extends Fragment implements OnMapReadyCallback, Goog
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_map_nav, container, false);
         
-        graphsButton = view.findViewById(R.id.graphs_button);
-        graphsButton.setOnClickListener(v -> showGraphForSouthButovo());
+        homeButton = view.findViewById(R.id.home_button);
+        homeButton.setOnClickListener(v -> toggleMapView());
         
         return view;
     }
@@ -418,6 +419,25 @@ public class MapNavFragment extends Fragment implements OnMapReadyCallback, Goog
         } catch (Exception e) {
             Log.e(TAG, "showGraphForSouthButovo: Ошибка при создании фрагмента с графиком", e);
             Toast.makeText(getContext(), "Ошибка при открытии графиков", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void toggleMapView() {
+        if (getActivity() == null) return;
+
+        if (!isShopsMapVisible) {
+            // Показываем карту магазинов
+            ShopsFragment shopsFragment = new ShopsFragment();
+            getActivity().getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragment_container, shopsFragment)
+                .addToBackStack("map")
+                .commit();
+            isShopsMapVisible = true;
+        } else {
+            // Возвращаемся к карте районов
+            getActivity().getSupportFragmentManager().popBackStack();
+            isShopsMapVisible = false;
         }
     }
 } 

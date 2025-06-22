@@ -33,11 +33,9 @@ public class SplashActivity extends AppCompatActivity {
         // Инициализация анимации
         animationView = findViewById(R.id.animationView);
         
-        // Инициализация Firebase
-        // mAuth = FirebaseAuth.getInstance();
+
         mDatabase = FirebaseDatabase.getInstance().getReference();
-        
-        // Начало загрузки данных
+
         loadData();
     }
     
