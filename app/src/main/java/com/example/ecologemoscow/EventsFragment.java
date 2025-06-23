@@ -1,5 +1,6 @@
 package com.example.ecologemoscow;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,6 +29,15 @@ public class EventsFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new EcoEventAdapter(new ArrayList<>());
         recyclerView.setAdapter(adapter);
+
+        FloatingActionButton btnProfile = view.findViewById(R.id.btn_profile);
+        btnProfile.setOnClickListener(v -> {
+            requireActivity().getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragment_container, new FirebaseEventsFragment())
+                .addToBackStack(null)
+                .commit();
+        });
 
         // Загрузка событий в отдельном потоке
         new Thread(() -> {
