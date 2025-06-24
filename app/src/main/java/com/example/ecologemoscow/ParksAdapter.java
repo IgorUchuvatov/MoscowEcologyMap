@@ -52,7 +52,7 @@ public class ParksAdapter extends RecyclerView.Adapter<ParksAdapter.ParkViewHold
 
         holder.cardView.setOnClickListener(v -> {
             if (context instanceof FragmentActivity) {
-                RouteFragment fragment = RouteFragment.newInstance(
+                ParkLocationFragment fragment = ParkLocationFragment.newInstance(
                         park.latitude,
                         park.longitude,
                         park.name

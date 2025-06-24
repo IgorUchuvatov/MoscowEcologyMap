@@ -16,7 +16,7 @@
             android:layout_height="wrap_content"
             android:textSize="24sp"
             android:textStyle="bold"
-            android:textColor="@android:color/black"/>
+            android:textColor="#666666"/>
 
         <TextView
             android:id="@+id/event_time"
@@ -24,7 +24,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:textSize="16sp"
-            android:textColor="@android:color/darker_gray"/>
+            android:textColor="#666666"/>
 
         <TextView
             android:id="@+id/event_address"
@@ -32,7 +32,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:textSize="16sp"
-            android:textColor="@android:color/black"/>
+            android:textColor="#666666"/>
 
         <TextView
             android:id="@+id/event_description"
@@ -40,7 +40,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:textSize="16sp"
-            android:textColor="@android:color/black"
+            android:textColor="#666666"
             android:lineSpacingExtra="4dp"/>
 
     </LinearLayout>

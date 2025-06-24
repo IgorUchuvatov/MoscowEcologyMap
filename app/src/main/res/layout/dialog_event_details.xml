@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         android:textSize="20sp"
         android:textStyle="bold"
-        android:textColor="@android:color/black"/>
+        android:textColor="#666666"/>
 
     <TextView
         android:id="@+id/dialog_event_date"
@@ -20,20 +20,21 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:textSize="16sp"
-        android:textColor="@android:color/darker_gray"/>
+        android:textColor="#666666"/>
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:layout_marginTop="16dp"
         android:layout_marginBottom="16dp"
-        android:background="@android:color/darker_gray"/>
+        android:background="#666666"/>
 
     <TextView
         android:id="@+id/dialog_event_description"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textSize="16sp"
+        android:textColor="#666666"
         android:lineSpacingExtra="4dp"/>
 
 </LinearLayout> 
