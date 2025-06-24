@@ -10,6 +10,8 @@ public class EcologicalRoute implements Parcelable {
     public String link;
     public String description;
     public List<Coordinate> path; // Список координат для маршрута
+    public transient float averageRating = 0;
+    public transient int ratingCount = 0;
 
     public EcologicalRoute(String name, String link, String description, List<Coordinate> path) {
         this.name = name;
@@ -24,6 +26,8 @@ public class EcologicalRoute implements Parcelable {
         description = in.readString();
         path = new ArrayList<>();
         in.readList(path, Coordinate.class.getClassLoader());
+        averageRating = in.readFloat();
+        ratingCount = in.readInt();
     }
 
     public static final Creator<EcologicalRoute> CREATOR = new Creator<EcologicalRoute>() {
@@ -49,6 +53,8 @@ public class EcologicalRoute implements Parcelable {
         dest.writeString(link);
         dest.writeString(description);
         dest.writeList(path);
+        dest.writeFloat(averageRating);
+        dest.writeInt(ratingCount);
     }
 
     public static class Coordinate implements Parcelable {

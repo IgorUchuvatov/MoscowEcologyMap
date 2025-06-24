@@ -4,6 +4,7 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.RatingBar;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
@@ -33,6 +34,7 @@ public class EcologicalRoutesAdapter extends RecyclerView.Adapter<EcologicalRout
         EcologicalRoute route = routes.get(position);
         holder.nameTextView.setText(route.name);
         holder.descriptionTextView.setText(route.description);
+        holder.ratingBar.setRating(route.averageRating);
 
         holder.cardView.setOnClickListener(v -> {
             if (context instanceof androidx.fragment.app.FragmentActivity) {
@@ -55,12 +57,14 @@ public class EcologicalRoutesAdapter extends RecyclerView.Adapter<EcologicalRout
         CardView cardView;
         TextView nameTextView;
         TextView descriptionTextView;
+        RatingBar ratingBar;
 
         RouteViewHolder(@NonNull View itemView) {
             super(itemView);
             cardView = itemView.findViewById(R.id.card_view);
             nameTextView = itemView.findViewById(R.id.route_name);
             descriptionTextView = itemView.findViewById(R.id.route_description);
+            ratingBar = itemView.findViewById(R.id.route_rating_bar);
         }
     }
 } 

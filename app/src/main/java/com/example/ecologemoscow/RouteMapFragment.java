@@ -29,6 +29,17 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+import androidx.appcompat.app.AlertDialog;
+import androidx.activity.OnBackPressedCallback;
+
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.MutableData;
+import com.google.firebase.database.Transaction;
+import android.widget.RatingBar;
+
 public class RouteMapFragment extends Fragment implements OnMapReadyCallback {
     private static final String TAG = "RouteMapFragment";
     private static final String ARG_ROUTE = "route";
@@ -49,6 +60,13 @@ public class RouteMapFragment extends Fragment implements OnMapReadyCallback {
         if (getArguments() != null) {
             route = getArguments().getParcelable(ARG_ROUTE);
         }
+
+        requireActivity().getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                showRatingDialog();
+            }
+        });
     }
 
     @Nullable
@@ -130,5 +148,64 @@ public class RouteMapFragment extends Fragment implements OnMapReadyCallback {
                 .map(c -> new LatLng(c.latitude, c.longitude))
                 .collect(Collectors.toList());
         drawPolyline(fallbackPath);
+    }
+
+    private void showRatingDialog() {
+        if (getContext() == null) return;
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        LayoutInflater inflater = requireActivity().getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_rating, null);
+        final RatingBar ratingBar = dialogView.findViewById(R.id.dialog_rating_bar);
+
+        builder.setView(dialogView)
+                .setPositiveButton("Отправить", (dialog, id) -> {
+                    float rating = ratingBar.getRating();
+                    if (rating > 0) {
+                        updateRouteRatingInFirebase(route, rating);
+                    }
+                    goBack();
+                })
+                .setNegativeButton("Отмена", (dialog, id) -> goBack());
+        builder.create().show();
+    }
+
+    private void goBack() {
+        if (isAdded()) {
+            getParentFragmentManager().popBackStack();
+        }
+    }
+
+    private void updateRouteRatingInFirebase(EcologicalRoute routeToRate, float rating) {
+        if (routeToRate == null || routeToRate.link == null) return;
+        String routeId = routeToRate.link.replace("/", "_").replace(".", "_");
+        DatabaseReference routeRef = FirebaseDatabase.getInstance().getReference("route_ratings").child(routeId);
+
+        routeRef.runTransaction(new Transaction.Handler() {
+            @NonNull
+            @Override
+            public Transaction.Result doTransaction(@NonNull MutableData mutableData) {
+                Integer ratingCount = mutableData.child("ratingCount").getValue(Integer.class);
+                Double totalScore = mutableData.child("totalScore").getValue(Double.class);
+
+                if (ratingCount == null) {
+                    ratingCount = 0;
+                    totalScore = 0.0;
+                }
+
+                ratingCount++;
+                totalScore += rating;
+
+                mutableData.child("ratingCount").setValue(ratingCount);
+                mutableData.child("totalScore").setValue(totalScore);
+                return Transaction.success(mutableData);
+            }
+
+            @Override
+            public void onComplete(@Nullable DatabaseError error, boolean committed, @Nullable DataSnapshot currentData) {
+                if (error != null) {
+                    Log.e(TAG, "Firebase transaction failed.", error.toException());
+                }
+            }
+        });
     }
 } 
