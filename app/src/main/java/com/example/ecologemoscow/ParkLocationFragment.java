@@ -305,4 +305,14 @@ public class ParkLocationFragment extends Fragment implements OnMapReadyCallback
         double vc = 2 * Math.atan2(Math.sqrt(va), Math.sqrt(1 - va));
         return earthRadius * vc;
     }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        // Удаляем карту из childFragmentManager, чтобы не было конфликтов при повторном открытии
+        Fragment mapFragment = getChildFragmentManager().findFragmentById(R.id.park_map);
+        if (mapFragment != null) {
+            getChildFragmentManager().beginTransaction().remove(mapFragment).commitAllowingStateLoss();
+        }
+    }
 } 
