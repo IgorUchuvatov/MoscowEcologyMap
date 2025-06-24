@@ -22,8 +22,20 @@
             android:textSize="18sp"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/cleanliness_index"
             app:layout_constraintTop_toTopOf="parent"/>
+
+        <TextView
+            android:id="@+id/cleanliness_index"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Чистота: 5/5"
+            android:textColor="@android:color/holo_green_dark"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/park_name"
+            app:layout_constraintBottom_toBottomOf="@id/park_name"/>
 
         <TextView
             android:id="@+id/park_description"

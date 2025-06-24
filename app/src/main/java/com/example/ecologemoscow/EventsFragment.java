@@ -16,6 +16,9 @@ import com.example.ecologemoscow.utils.EcoEventParser;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import java.util.ArrayList;
 import java.util.List;
+import com.example.ecologemoscow.EventDetailsFragment;
+import android.widget.Toast;
+import android.util.Log;
 
 public class EventsFragment extends Fragment {
     private RecyclerView recyclerView;
@@ -30,11 +33,11 @@ public class EventsFragment extends Fragment {
         adapter = new EcoEventAdapter(new ArrayList<>());
         recyclerView.setAdapter(adapter);
 
-        FloatingActionButton btnProfile = view.findViewById(R.id.btn_profile);
-        btnProfile.setOnClickListener(v -> {
+        adapter.setOnEventClickListener(event -> {
+            EventDetailsFragment fragment = EventDetailsFragment.newInstance(event);
             requireActivity().getSupportFragmentManager()
                 .beginTransaction()
-                .replace(R.id.fragment_container, new FirebaseEventsFragment())
+                .replace(R.id.fragment_container, fragment)
                 .addToBackStack(null)
                 .commit();
         });
@@ -42,7 +45,13 @@ public class EventsFragment extends Fragment {
         // Загрузка событий в отдельном потоке
         new Thread(() -> {
             List<EcoEvent> events = EcoEventParser.fetchEcoEvents();
-            requireActivity().runOnUiThread(() -> adapter.setEvents(events));
+            requireActivity().runOnUiThread(() -> {
+                adapter.setEvents(events);
+                if (events == null || events.isEmpty()) {
+                    Toast.makeText(getContext(), "Мероприятий не найдено или произошла ошибка при загрузке.", Toast.LENGTH_LONG).show();
+                    Log.e("EventsFragment", "Список мероприятий пуст или не загружен.");
+                }
+            });
         }).start();
 
         return view;

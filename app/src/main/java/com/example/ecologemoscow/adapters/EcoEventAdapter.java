@@ -12,6 +12,15 @@ import java.util.List;
 
 public class EcoEventAdapter extends RecyclerView.Adapter<EcoEventAdapter.ViewHolder> {
     private List<EcoEvent> events;
+    private OnEventClickListener listener;
+
+    public interface OnEventClickListener {
+        void onEventClick(EcoEvent event);
+    }
+
+    public void setOnEventClickListener(OnEventClickListener listener) {
+        this.listener = listener;
+    }
 
     public EcoEventAdapter(List<EcoEvent> events) {
         this.events = events;
@@ -34,10 +43,9 @@ public class EcoEventAdapter extends RecyclerView.Adapter<EcoEventAdapter.ViewHo
         holder.link.setText(event.getLink());
 
         holder.itemView.setOnClickListener(v -> {
-            int visibility = holder.description.getVisibility() == View.GONE ? View.VISIBLE : View.GONE;
-            holder.description.setVisibility(visibility);
-            holder.location.setVisibility(visibility);
-            holder.link.setVisibility(visibility);
+            if (listener != null) {
+                listener.onEventClick(event);
+            }
         });
     }
 

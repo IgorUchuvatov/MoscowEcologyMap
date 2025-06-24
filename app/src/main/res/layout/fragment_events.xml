@@ -12,13 +12,4 @@
         android:padding="8dp"
         android:clipToPadding="false"/>
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/btn_profile"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top|end"
-        android:layout_margin="16dp"
-        android:contentDescription="Профиль"
-        app:srcCompat="@drawable/ic_profile" />
-
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

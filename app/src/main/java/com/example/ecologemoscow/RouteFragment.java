@@ -16,6 +16,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
@@ -35,6 +36,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
+import com.android.volley.Response;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import org.json.JSONArray;
@@ -57,6 +59,7 @@ public class RouteFragment extends Fragment implements OnMapReadyCallback {
     private GoogleMap map;
     private TextView routeInfoTextView;
     private TextView routeDetailsTextView;
+    private CardView routeInfoCard;
     private Button buildRouteButton;
     private FusedLocationProviderClient fusedLocationClient;
     private LocationCallback locationCallback;
@@ -66,9 +69,6 @@ public class RouteFragment extends Fragment implements OnMapReadyCallback {
     private RequestQueue requestQueue;
     private boolean isRouteBuilt = false;
     private boolean isNavigating = false;
-    private List<String> navigationSteps = new ArrayList<>();
-    private int currentStepIndex = 0;
-    private TextView stepTextView;
 
     public static RouteFragment newInstance(double latitude, double longitude, String title) {
         RouteFragment fragment = new RouteFragment();
@@ -88,17 +88,16 @@ public class RouteFragment extends Fragment implements OnMapReadyCallback {
             longitude = getArguments().getDouble(ARG_LONGITUDE);
             title = getArguments().getString(ARG_TITLE);
         }
+        
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
         requestQueue = Volley.newRequestQueue(requireContext());
         
-        // Настраиваем запрос на обновление местоположения
         locationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, LOCATION_UPDATE_INTERVAL)
                 .setWaitForAccurateLocation(false)
                 .setMinUpdateIntervalMillis(LOCATION_UPDATE_INTERVAL)
                 .setMaxUpdateDelayMillis(LOCATION_UPDATE_INTERVAL)
                 .build();
 
-        // Создаем callback для обработки обновлений местоположения
         locationCallback = new LocationCallback() {
             @Override
             public void onLocationResult(@NonNull LocationResult locationResult) {
@@ -106,14 +105,11 @@ public class RouteFragment extends Fragment implements OnMapReadyCallback {
                 if (location != null) {
                     currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
                     if (isNavigating && map != null) {
-                        // Обновляем камеру только если включен режим навигации
                         map.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 18));
                     }
                 }
             }
         };
-        
-        Log.d(TAG, "RouteFragment created for: " + title);
     }
 
     @Nullable
@@ -122,6 +118,7 @@ public class RouteFragment extends Fragment implements OnMapReadyCallback {
         View view = inflater.inflate(R.layout.fragment_route, container, false);
         
         ImageButton backButton = view.findViewById(R.id.back_button);
+        routeInfoCard = view.findViewById(R.id.route_info_card);
         routeInfoTextView = view.findViewById(R.id.route_info);
         routeDetailsTextView = view.findViewById(R.id.route_details);
         buildRouteButton = view.findViewById(R.id.build_route_button);
@@ -142,7 +139,6 @@ public class RouteFragment extends Fragment implements OnMapReadyCallback {
                     requestLocationPermission();
                 }
             } else {
-                // Переключаем режим навигации
                 isNavigating = !isNavigating;
                 if (isNavigating) {
                     startLocationUpdates();
@@ -153,7 +149,6 @@ public class RouteFragment extends Fragment implements OnMapReadyCallback {
                 } else {
                     stopLocationUpdates();
                     buildRouteButton.setText("Начать навигацию");
-                    // Показываем весь маршрут
                     if (currentLocation != null && destinationLocation != null) {
                         LatLngBounds.Builder boundsBuilder = new LatLngBounds.Builder();
                         boundsBuilder.include(currentLocation);
@@ -163,57 +158,44 @@ public class RouteFragment extends Fragment implements OnMapReadyCallback {
                 }
             }
         });
-        
-        stepTextView = new TextView(requireContext());
-        stepTextView.setTextSize(16);
-        stepTextView.setTextColor(Color.BLACK);
-        ((ViewGroup) view).addView(stepTextView);
-        
-        return view;
-    }
 
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        
         SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager()
                 .findFragmentById(R.id.route_map);
-        if (mapFragment != null) {
-            mapFragment.getMapAsync(this);
+        if (mapFragment == null) {
+            mapFragment = SupportMapFragment.newInstance();
+            getChildFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.route_map, mapFragment)
+                    .commit();
         }
+        mapFragment.getMapAsync(this);
+        
+        return view;
     }
 
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
         map = googleMap;
         destinationLocation = new LatLng(latitude, longitude);
+
+        if (checkLocationPermission()) {
+            if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                return;
+            }
+            map.setMyLocationEnabled(true);
+        } else {
+            requestLocationPermission();
+        }
+
+        map.getUiSettings().setZoomControlsEnabled(true);
+        map.getUiSettings().setMyLocationButtonEnabled(true);
+        map.getUiSettings().setCompassEnabled(true);
         
-        // Добавляем маркер места назначения
         map.addMarker(new MarkerOptions()
                 .position(destinationLocation)
                 .title(title));
         
-        // Приближаем камеру к месту назначения
         map.moveCamera(CameraUpdateFactory.newLatLngZoom(destinationLocation, 15));
-        
-        if (checkLocationPermission()) {
-            map.setMyLocationEnabled(true);
-        }
-    }
-
-    private void startLocationUpdates() {
-        if (ActivityCompat.checkSelfPermission(requireContext(), 
-                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
-        
-        fusedLocationClient.requestLocationUpdates(locationRequest,
-                locationCallback,
-                Looper.getMainLooper());
-    }
-
-    private void stopLocationUpdates() {
-        fusedLocationClient.removeLocationUpdates(locationCallback);
     }
 
     private boolean checkLocationPermission() {
@@ -231,7 +213,13 @@ public class RouteFragment extends Fragment implements OnMapReadyCallback {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                getCurrentLocation();
+                if (map != null) {
+                    if (ActivityCompat.checkSelfPermission(requireContext(),
+                            Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                        map.setMyLocationEnabled(true);
+                        getCurrentLocation();
+                    }
+                }
             } else {
                 Toast.makeText(requireContext(), "Для построения маршрута необходим доступ к геолокации", Toast.LENGTH_LONG).show();
             }
@@ -239,11 +227,11 @@ public class RouteFragment extends Fragment implements OnMapReadyCallback {
     }
 
     private void getCurrentLocation() {
-        if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
 
-        map.setMyLocationEnabled(true);
         fusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
             if (location != null) {
                 currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
@@ -261,75 +249,95 @@ public class RouteFragment extends Fragment implements OnMapReadyCallback {
         map.addMarker(new MarkerOptions().position(currentLocation).title("Ваше местоположение"));
         map.addMarker(new MarkerOptions().position(destinationLocation).title(title));
 
-        // Формируем запрос к OSRM (пешеходный маршрут)
         String url = String.format(Locale.US,
-            "https://router.project-osrm.org/route/v1/foot/%f,%f;%f,%f?overview=full&geometries=geojson",
+            "https://router.project-osrm.org/route/v1/foot/%f,%f;%f,%f?overview=full&geometries=geojson&steps=true",
             currentLocation.longitude, currentLocation.latitude,
             destinationLocation.longitude, destinationLocation.latitude
         );
 
         Log.d(TAG, "OSRM API URL: " + url);
 
-        StringRequest request = new StringRequest(Request.Method.GET, url,
-            response -> {
-                Log.d(TAG, "OSRM API response: " + response);
-                try {
-                    JSONObject jsonResponse = new JSONObject(response);
-                    String code = jsonResponse.optString("code", "NO_CODE");
-                    String message = jsonResponse.optString("message", "NO_MESSAGE");
-                    Log.d(TAG, "OSRM code: " + code);
-                    if (!"NO_MESSAGE".equals(message)) {
-                        Log.d(TAG, "OSRM message: " + message);
-                    }
-                    JSONArray routes = jsonResponse.optJSONArray("routes");
-                    if ("Ok".equals(code)) {
-                        if (routes != null && routes.length() > 0) {
-                            JSONObject route = routes.getJSONObject(0);
-                            double distance = route.getDouble("distance") / 1000.0; // в км
-                            double duration = route.getDouble("duration") / 60.0; // в минутах
-                            routeDetailsTextView.setText(String.format("\uD83D\uDDFA %.1f км   ⏱ %.0f мин", distance, duration));
-
-                            // Получаем координаты маршрута
-                            JSONObject geometry = route.getJSONObject("geometry");
-                            JSONArray coordinates = geometry.getJSONArray("coordinates");
-                            List<LatLng> path = new ArrayList<>();
-                            for (int i = 0; i < coordinates.length(); i++) {
-                                JSONArray coord = coordinates.getJSONArray(i);
-                                double lon = coord.getDouble(0);
-                                double lat = coord.getDouble(1);
-                                path.add(new LatLng(lat, lon));
-                            }
-                            map.addPolyline(new PolylineOptions()
-                                    .addAll(path)
-                                    .width(12)
-                                    .color(Color.rgb(33, 150, 243)));
-
-                            // Масштабируем карту на маршрут
-                            LatLngBounds.Builder boundsBuilder = new LatLngBounds.Builder();
-                            for (LatLng point : path) boundsBuilder.include(point);
-                            map.animateCamera(CameraUpdateFactory.newLatLngBounds(boundsBuilder.build(), 100));
-
-                            isRouteBuilt = true;
-                            buildRouteButton.setText("Начать навигацию");
-                        } else {
-                            Log.e(TAG, "OSRM: routes array is empty. routes=" + (routes != null ? routes.toString() : "null"));
-                            Toast.makeText(requireContext(), "Маршрут не найден (OSRM)", Toast.LENGTH_SHORT).show();
+        StringRequest request = new StringRequest(
+            Request.Method.GET,
+            url,
+            new Response.Listener<String>() {
+                @Override
+                public void onResponse(String response) {
+                    Log.d(TAG, "OSRM API response: " + response);
+                    try {
+                        JSONObject jsonResponse = new JSONObject(response);
+                        String code = jsonResponse.optString("code", "NO_CODE");
+                        String message = jsonResponse.optString("message", "NO_MESSAGE");
+                        Log.d(TAG, "OSRM code: " + code);
+                        if (!"NO_MESSAGE".equals(message)) {
+                            Log.d(TAG, "OSRM message: " + message);
                         }
-                    } else {
-                        Log.e(TAG, "OSRM API error: code=" + code + ", message=" + message + ", routes=" + (routes != null ? routes.toString() : "null"));
-                        Toast.makeText(requireContext(), "Ошибка OSRM: " + code + ("NO_MESSAGE".equals(message) ? "" : (" (" + message + ")")), Toast.LENGTH_SHORT).show();
+                        JSONArray routes = jsonResponse.optJSONArray("routes");
+                        if ("Ok".equals(code)) {
+                            if (routes != null && routes.length() > 0) {
+                                JSONObject route = routes.getJSONObject(0);
+                                double distance = route.getDouble("distance") / 1000.0; // в км
+                                double duration = route.getDouble("duration") / 60.0; // в минутах
+                                routeDetailsTextView.setText(String.format(Locale.US, "🗺️ %.1f км   ⏱️ %.0f мин", distance, duration));
+
+                                routeInfoCard.setVisibility(View.VISIBLE);
+
+                                JSONObject geometry = route.getJSONObject("geometry");
+                                JSONArray coordinates = geometry.getJSONArray("coordinates");
+                                List<LatLng> path = new ArrayList<>();
+                                for (int i = 0; i < coordinates.length(); i++) {
+                                    JSONArray coord = coordinates.getJSONArray(i);
+                                    double lon = coord.getDouble(0);
+                                    double lat = coord.getDouble(1);
+                                    path.add(new LatLng(lat, lon));
+                                }
+                                map.addPolyline(new PolylineOptions()
+                                        .addAll(path)
+                                        .width(12)
+                                        .color(Color.rgb(33, 150, 243)));
+
+                                LatLngBounds.Builder boundsBuilder = new LatLngBounds.Builder();
+                                for (LatLng point : path) boundsBuilder.include(point);
+                                map.animateCamera(CameraUpdateFactory.newLatLngBounds(boundsBuilder.build(), 100));
+
+                                isRouteBuilt = true;
+                                buildRouteButton.setText("Начать навигацию");
+                            } else {
+                                Log.e(TAG, "OSRM: routes array is empty. routes=" + (routes != null ? routes.toString() : "null"));
+                                Toast.makeText(requireContext(), "Маршрут не найден", Toast.LENGTH_SHORT).show();
+                            }
+                        } else {
+                            Log.e(TAG, "OSRM API error: code=" + code + ", message=" + message);
+                            Toast.makeText(requireContext(), "Ошибка построения маршрута: " + code, Toast.LENGTH_SHORT).show();
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error parsing OSRM response: " + e.getMessage(), e);
+                        Toast.makeText(requireContext(), "Ошибка при обработке маршрута", Toast.LENGTH_SHORT).show();
                     }
-                } catch (Exception e) {
-                    Log.e(TAG, "Error parsing OSRM response: " + e.getMessage(), e);
-                    Toast.makeText(requireContext(), "Ошибка при построении маршрута (OSRM)", Toast.LENGTH_SHORT).show();
                 }
             },
-            error -> {
-                Log.e(TAG, "Error fetching OSRM route: " + error.toString(), error);
-                Toast.makeText(requireContext(), "Ошибка при получении маршрута (OSRM)", Toast.LENGTH_SHORT).show();
-            });
+            new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(com.android.volley.VolleyError error) {
+                    Log.e(TAG, "Error fetching OSRM route: " + error.toString(), error);
+                    Toast.makeText(requireContext(), "Ошибка при получении маршрута", Toast.LENGTH_SHORT).show();
+                }
+            }
+        );
 
         requestQueue.add(request);
+    }
+
+    private void startLocationUpdates() {
+        if (ActivityCompat.checkSelfPermission(requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
+    }
+
+    private void stopLocationUpdates() {
+        fusedLocationClient.removeLocationUpdates(locationCallback);
     }
 
     @Override

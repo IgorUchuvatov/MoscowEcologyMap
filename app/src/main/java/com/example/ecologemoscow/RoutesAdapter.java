@@ -42,8 +42,12 @@ public class RoutesAdapter extends RecyclerView.Adapter<RoutesAdapter.RouteViewH
         // Обработка нажатия на элемент
         holder.itemView.setOnClickListener(v -> {
             if (route.getLatitude() != 0 && route.getLongitude() != 0) {
-                ((MainActivity) holder.itemView.getContext())
-                    .showPlaceOnMap(route.getLatitude(), route.getLongitude(), route.getTitle());
+                androidx.fragment.app.FragmentActivity activity = (androidx.fragment.app.FragmentActivity) holder.itemView.getContext();
+                activity.getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, com.example.ecologemoscow.RouteFragment.newInstance(route.getLatitude(), route.getLongitude(), route.getTitle()))
+                    .addToBackStack(null)
+                    .commit();
             }
         });
     }

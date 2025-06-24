@@ -1,6 +1,7 @@
 package com.example.ecologemoscow;
 
 import android.content.Context;
+import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -33,36 +34,37 @@ public class ParksAdapter extends RecyclerView.Adapter<ParksAdapter.ParkViewHold
 
     @Override
     public void onBindViewHolder(@NonNull ParkViewHolder holder, int position) {
-        try {
-            Park park = parks.get(position);
-            Log.d(TAG, "Binding park at position " + position + ": " + park.name);
-            
-            holder.nameTextView.setText(park.name);
-            holder.descriptionTextView.setText(park.description);
-            
-            holder.cardView.setOnClickListener(v -> {
-                try {
-                    if (context instanceof FragmentActivity) {
-                        MapFragment mapFragment = MapFragment.newInstance(
-                            park.latitude,
-                            park.longitude,
-                            park.name
-                        );
-                        
-                        ((FragmentActivity) context).getSupportFragmentManager()
-                            .beginTransaction()
-                            .replace(R.id.fragment_container, mapFragment)
-                            .addToBackStack("parks_list")
-                            .commit();
-                    }
-                } catch (Exception e) {
-                    Log.e(TAG, "Error opening map for park: " + park.name, e);
-                    Toast.makeText(context, "Не удалось открыть карту", Toast.LENGTH_SHORT).show();
-                }
-            });
-        } catch (Exception e) {
-            Log.e(TAG, "Error binding park at position " + position, e);
+        Park park = parks.get(position);
+        holder.nameTextView.setText(park.name);
+        holder.descriptionTextView.setText(park.description);
+        holder.cleanlinessIndexView.setText("Чистота: " + park.cleanlinessIndex + "/10");
+        
+        // Установка цвета в зависимости от индекса чистоты
+        int color;
+        if (park.cleanlinessIndex >= 8) {
+            color = holder.itemView.getContext().getColor(android.R.color.holo_green_dark);
+        } else if (park.cleanlinessIndex >= 4) {
+            color = holder.itemView.getContext().getColor(android.R.color.holo_orange_dark);
+        } else {
+            color = holder.itemView.getContext().getColor(android.R.color.holo_red_dark);
         }
+        holder.cleanlinessIndexView.setTextColor(color);
+
+        holder.cardView.setOnClickListener(v -> {
+            if (context instanceof FragmentActivity) {
+                RouteFragment fragment = RouteFragment.newInstance(
+                        park.latitude,
+                        park.longitude,
+                        park.name
+                );
+
+                ((FragmentActivity) context).getSupportFragmentManager()
+                        .beginTransaction()
+                        .replace(R.id.fragment_container, fragment)
+                        .addToBackStack(null)
+                        .commit();
+            }
+        });
     }
 
     @Override
@@ -74,12 +76,14 @@ public class ParksAdapter extends RecyclerView.Adapter<ParksAdapter.ParkViewHold
         CardView cardView;
         TextView nameTextView;
         TextView descriptionTextView;
+        TextView cleanlinessIndexView;
 
         ParkViewHolder(@NonNull View itemView) {
             super(itemView);
             cardView = itemView.findViewById(R.id.card_view);
             nameTextView = itemView.findViewById(R.id.park_name);
             descriptionTextView = itemView.findViewById(R.id.park_description);
+            cleanlinessIndexView = itemView.findViewById(R.id.cleanliness_index);
         }
     }
 } 
