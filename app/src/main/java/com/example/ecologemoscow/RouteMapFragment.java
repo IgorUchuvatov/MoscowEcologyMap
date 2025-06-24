@@ -1,25 +1,39 @@
 package com.example.ecologemoscow;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import com.example.ecologemoscow.api.OsrmApiClient;
+import com.example.ecologemoscow.api.OsrmResponse;
+import com.example.ecologemoscow.utils.PolylineDecoder;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.PolylineOptions;
-import java.util.ArrayList;
+
 import java.util.List;
+import java.util.stream.Collectors;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class RouteMapFragment extends Fragment implements OnMapReadyCallback {
+    private static final String TAG = "RouteMapFragment";
     private static final String ARG_ROUTE = "route";
     private EcologicalRoute route;
+    private GoogleMap googleMap;
 
     public static RouteMapFragment newInstance(EcologicalRoute route) {
         RouteMapFragment fragment = new RouteMapFragment();
@@ -42,13 +56,10 @@ public class RouteMapFragment extends Fragment implements OnMapReadyCallback {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_route_map, container, false);
         SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.route_map);
-        if (mapFragment == null) {
-            mapFragment = SupportMapFragment.newInstance();
-            getChildFragmentManager().beginTransaction().replace(R.id.route_map, mapFragment).commit();
+        if (mapFragment != null) {
+            mapFragment.getMapAsync(this);
         }
-        mapFragment.getMapAsync(this);
 
-        // Отображаем название и описание маршрута
         TextView title = view.findViewById(R.id.route_title);
         TextView desc = view.findViewById(R.id.route_desc);
         if (route != null) {
@@ -60,22 +71,64 @@ public class RouteMapFragment extends Fragment implements OnMapReadyCallback {
 
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
+        this.googleMap = googleMap;
         if (route != null && route.path != null && !route.path.isEmpty()) {
-            List<LatLng> latLngs = new ArrayList<>();
-            for (EcologicalRoute.Coordinate coord : route.path) {
-                latLngs.add(new LatLng(coord.latitude, coord.longitude));
-            }
-            PolylineOptions polylineOptions = new PolylineOptions()
-                    .addAll(latLngs)
-                    .color(0xFF388E3C) // зелёный
-                    .width(8f);
-            googleMap.addPolyline(polylineOptions);
-            // Центрируем карту на первой точке маршрута
-            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLngs.get(0), 15f));
+            fetchAndDrawRoute();
         } else {
-            // Если нет координат — центрируем на Москве
             LatLng moscow = new LatLng(55.751244, 37.618423);
             googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(moscow, 10f));
         }
+    }
+
+    private void fetchAndDrawRoute() {
+        String coordinates = route.path.stream()
+                .map(c -> c.longitude + "," + c.latitude)
+                .collect(Collectors.joining(";"));
+
+        OsrmApiClient.getOsrmApi().getRoute(coordinates, "full", "polyline").enqueue(new Callback<OsrmResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<OsrmResponse> call, @NonNull Response<OsrmResponse> response) {
+                if (response.isSuccessful() && response.body() != null && !response.body().getRoutes().isEmpty()) {
+                    String encodedPolyline = response.body().getRoutes().get(0).getGeometry();
+                    List<LatLng> decodedPath = PolylineDecoder.decode(encodedPolyline);
+                    drawPolyline(decodedPath);
+                } else {
+                    Toast.makeText(getContext(), "Не удалось построить маршрут", Toast.LENGTH_SHORT).show();
+                    drawFallbackPolyline();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<OsrmResponse> call, @NonNull Throwable t) {
+                Log.e(TAG, "Ошибка при запросе к OSRM", t);
+                Toast.makeText(getContext(), "Ошибка сети при построении маршрута", Toast.LENGTH_SHORT).show();
+                drawFallbackPolyline();
+            }
+        });
+    }
+    
+    private void drawPolyline(List<LatLng> path) {
+        if (googleMap != null && path != null && !path.isEmpty()) {
+            PolylineOptions polylineOptions = new PolylineOptions()
+                    .addAll(path)
+                    .color(0xFF009688) // бирюзовый
+                    .width(12f)
+                    .geodesic(true);
+            googleMap.addPolyline(polylineOptions);
+
+            LatLngBounds.Builder builder = new LatLngBounds.Builder();
+            for (LatLng latLng : path) {
+                builder.include(latLng);
+            }
+            LatLngBounds bounds = builder.build();
+            googleMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 100));
+        }
+    }
+
+    private void drawFallbackPolyline() {
+        List<LatLng> fallbackPath = route.path.stream()
+                .map(c -> new LatLng(c.latitude, c.longitude))
+                .collect(Collectors.toList());
+        drawPolyline(fallbackPath);
     }
 } 
