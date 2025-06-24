@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <fragment
+        android:id="@+id/route_map"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <LinearLayout
+        android:id="@+id/route_info_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="vertical"
+        android:background="#CCFFFFFF"
+        android:padding="16dp"
+        android:layout_margin="8dp"
+        android:elevation="8dp"
+        android:gravity="bottom">
+
+        <TextView
+            android:id="@+id/route_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Название маршрута"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#222"/>
+
+        <TextView
+            android:id="@+id/route_desc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Описание маршрута"
+            android:textSize="14sp"
+            android:textColor="#444"
+            android:layout_marginTop="4dp"/>
+    </LinearLayout>
+
+</FrameLayout> 

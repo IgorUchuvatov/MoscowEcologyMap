@@ -20,11 +20,19 @@
         <action
             android:id="@+id/action_mainFragment_to_eventsFragment"
             app:destination="@id/eventsFragment" />
+        <action
+            android:id="@+id/action_mainFragment_to_routesFragment"
+            app:destination="@id/routesFragment" />
     </fragment>
 
     <fragment
         android:id="@+id/eventsFragment"
         android:name="com.example.ecologemoscow.EventsFragment"
         android:label="EventsFragment" />
+
+    <fragment
+        android:id="@+id/routesFragment"
+        android:name="com.example.ecologemoscow.RoutesFragment"
+        android:label="RoutesFragment" />
 
 </navigation> 

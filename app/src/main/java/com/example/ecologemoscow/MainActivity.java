@@ -159,7 +159,7 @@ public class MainActivity extends AppCompatActivity {
                     selectedFragment = new PlacesFragment();
                     tag = "parks";
                 } else if (itemId == R.id.navigation_routes) {
-                    selectedFragment = new BlankFragment();
+                    selectedFragment = new RoutesFragment();
                     tag = "routes";
                 }
 
@@ -212,7 +212,7 @@ public class MainActivity extends AppCompatActivity {
             if ("parks".equals(tag)) {
                 bottomNavigationView.setSelectedItemId(R.id.navigation_parks);
             }
-        } else if (activeFragment instanceof BlankFragment) {
+        } else if (activeFragment instanceof RoutesFragment) {
             bottomNavigationView.setSelectedItemId(R.id.navigation_routes);
         }
     }

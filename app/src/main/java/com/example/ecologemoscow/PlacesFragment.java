@@ -10,13 +10,14 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class PlacesFragment extends Fragment {
     private static final String TAG = "PlacesFragment";
-    private RecyclerView recyclerView;
-    private ParksAdapter adapter;
+    private RecyclerView parksRecyclerView;
+    private ParksAdapter parksAdapter;
     private List<Park> parks = new ArrayList<>();
 
     @Nullable
@@ -25,24 +26,25 @@ public class PlacesFragment extends Fragment {
         Log.d(TAG, "Creating view");
         View view = inflater.inflate(R.layout.fragment_places, container, false);
         
-        recyclerView = view.findViewById(R.id.parks_recycler_view);
-        if (recyclerView == null) {
+        parksRecyclerView = view.findViewById(R.id.parks_recycler_view);
+
+        if (parksRecyclerView == null) {
             Log.e(TAG, "RecyclerView is null");
             return view;
         }
         
         Log.d(TAG, "Setting up RecyclerView");
-        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        parksRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         
         parks = new ArrayList<>();
-        adapter = new ParksAdapter(getContext(), parks);
-        recyclerView.setAdapter(adapter);
+        parksAdapter = new ParksAdapter(getContext(), parks);
+        parksRecyclerView.setAdapter(parksAdapter);
         
         loadDemoData();
         
         return view;
     }
-    
+
     private void loadDemoData() {
         Log.d(TAG, "Loading demo data");
         parks.clear();
@@ -198,6 +200,6 @@ public class PlacesFragment extends Fragment {
         ));
         
         Log.d(TAG, "Added " + parks.size() + " demo parks");
-        adapter.notifyDataSetChanged();
+        parksAdapter.notifyDataSetChanged();
     }
 } 

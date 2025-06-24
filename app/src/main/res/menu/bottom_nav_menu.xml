@@ -23,5 +23,5 @@
     <item
         android:id="@+id/navigation_routes"
         android:icon="@drawable/ic_routes_blue"
-        android:title="@string/routes" />
+        android:title="Маршруты" />
 </menu> 
